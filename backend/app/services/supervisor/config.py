@@ -51,6 +51,25 @@ class OllamaConfig(BaseModel):
     timeout: float = 30.0  # seconds
 
 
+class MeshProcessConfig(BaseModel):
+    """Configuration for auto-launching agent-mesh when it's down."""
+
+    enabled: bool = False
+    command: str = "agent-mesh"
+    config: str = "config.yaml"
+    restart_delay: float = 5.0  # seconds before respawn after crash
+
+
+class MemoryConfig(BaseModel):
+    """Configuration for memory-mcp integration via agent-mesh."""
+
+    enabled: bool = False
+    store_decisions: bool = True  # store each decision in memory
+    recall_on_start: bool = True  # recall recent decisions on startup
+    recall_limit: int = 20        # how many recent decisions to recall
+    tags: list[str] = Field(default_factory=lambda: ["supervisor", "decision"])
+
+
 class SupervisorConfig(BaseModel):
     """Top-level supervisor configuration."""
 
@@ -63,6 +82,8 @@ class SupervisorConfig(BaseModel):
     project_dirs: list[str] = Field(default_factory=list)
     decision_log: str = "supervisor-decisions.jsonl"
     ollama: OllamaConfig = Field(default_factory=OllamaConfig)
+    mesh_process: MeshProcessConfig = Field(default_factory=MeshProcessConfig)
+    memory: MemoryConfig = Field(default_factory=MemoryConfig)
 
     @field_validator("poll_interval", mode="before")
     @classmethod
