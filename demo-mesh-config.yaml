@@ -1,0 +1,28 @@
+# agent-mesh config for supervisor demo
+# All filesystem writes require approval — supervisor will handle them
+
+port: 9090
+trace_file: demo-traces.jsonl
+
+supervisor:
+  expose_content: false
+
+mcp_servers:
+  - name: filesystem
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/supervisor-demo"]
+
+policies:
+  - name: demo
+    agent: "*"
+    rules:
+      # Reads are allowed
+      - tools: ["filesystem.read_*", "filesystem.list_*", "filesystem.search_*"]
+        action: allow
+      # Writes require approval (supervisor will handle)
+      - tools: ["filesystem.write_file", "filesystem.edit_file", "filesystem.create_directory"]
+        action: human_approval
+      # Everything else denied
+      - tools: ["*"]
+        action: deny
