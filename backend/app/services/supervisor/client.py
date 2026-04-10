@@ -31,21 +31,31 @@ class MeshClient:
             timeout=10.0,
         )
 
-    async def list_pending(self, tool_scope: str | None = None) -> list[ApprovalSummary]:
-        """List pending approvals, optionally filtered by tool glob."""
+    async def list_pending(self, tool_scope: str | None = None) -> list[ApprovalSummary] | None:
+        """List pending approvals, optionally filtered by tool glob.
+
+        Returns None on connection failure (mesh down) vs [] for no pending approvals.
+        """
         params: dict[str, str] = {"status": "pending"}
         if tool_scope:
             params["tool"] = tool_scope
         try:
             resp = await self._client.get("/approvals", params=params)
         except (httpx.ConnectError, httpx.ConnectTimeout):
-            logger.warning("cannot connect to agent-mesh at %s", self._base_url)
-            return []
+            return None  # mesh is down
 
         if resp.status_code != 200:
             raise MeshClientError(resp.status_code, resp.text)
 
         return [ApprovalSummary.model_validate(item) for item in resp.json()]
+
+    async def is_healthy(self) -> bool:
+        """Check if agent-mesh is responding."""
+        try:
+            resp = await self._client.get("/health")
+            return resp.status_code == 200
+        except (httpx.ConnectError, httpx.ConnectTimeout):
+            return False
 
     async def get_detail(self, approval_id: str) -> ApprovalDetail:
         """Get approval detail with recent traces and active grants."""

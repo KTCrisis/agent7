@@ -32,8 +32,7 @@ class SupervisorRunner:
         self._shutdown = False
         self._seen_escalated: set[str] = set()
         self._semaphore = asyncio.Semaphore(10)
-        self._mesh_connected = False
-        self._consecutive_failures = 0
+        self._mesh_alive = False
 
         # Process manager (optional)
         self._mesh_process: MeshProcess | None = None
@@ -80,16 +79,23 @@ class SupervisorRunner:
 
     async def _ensure_mesh(self) -> None:
         """Ensure agent-mesh is running, spawn if needed."""
-        if self._mesh_process is None:
+        # First check if mesh is already alive (e.g. launched by Claude)
+        if await self._client.is_healthy():
+            logger.info("agent-mesh already running")
+            self._mesh_alive = True
             return
 
-        if not self._mesh_process.is_running:
-            if self._mesh_process.spawn():
-                await self._mesh_process.wait_ready(timeout=15.0)
+        if self._mesh_process is None:
+            logger.info("agent-mesh not reachable, waiting (no process management configured)")
+            return
+
+        if self._mesh_process.spawn():
+            if await self._mesh_process.wait_ready(timeout=15.0):
+                self._mesh_alive = True
 
     async def _recall_memory(self) -> None:
         """Recall recent decisions from memory-mcp on startup."""
-        if self._memory is None:
+        if self._memory is None or not self._mesh_alive:
             return
 
         try:
@@ -111,12 +117,7 @@ class SupervisorRunner:
             try:
                 pending = await self._poll()
                 if pending:
-                    self._consecutive_failures = 0
-                    self._mesh_connected = True
                     await self._process_batch(pending)
-                elif self._mesh_connected:
-                    # Connected but no pending — that's normal
-                    self._consecutive_failures = 0
             except MeshClientError as e:
                 logger.error("mesh API error: %s", e)
             except Exception:
@@ -128,25 +129,44 @@ class SupervisorRunner:
         """Fetch pending approvals, deduplicated across tool scopes."""
         seen_ids: set[str] = set()
         results: list[ApprovalSummary] = []
+        any_connected = False
 
         scopes = self._config.tool_scopes or [None]
         for scope in scopes:
             approvals = await self._client.list_pending(scope)
+            if approvals is None:
+                # Connection failed for this scope
+                continue
+            any_connected = True
             for a in approvals:
                 if a.id not in seen_ids and a.id not in self._seen_escalated:
                     seen_ids.add(a.id)
                     results.append(a)
 
-        # If we got nothing and weren't connected, check mesh health
-        if not results and not self._mesh_connected:
-            self._consecutive_failures += 1
-            if self._consecutive_failures >= 3 and self._mesh_process:
-                logger.info("agent-mesh unreachable (%d attempts), checking process...", self._consecutive_failures)
-                if self._mesh_process.check_and_restart():
-                    await self._mesh_process.wait_ready(timeout=15.0)
-                    self._consecutive_failures = 0
+        if any_connected:
+            if not self._mesh_alive:
+                logger.info("agent-mesh connected")
+            self._mesh_alive = True
+        elif self._mesh_alive:
+            # Was alive, now down
+            logger.warning("agent-mesh connection lost")
+            self._mesh_alive = False
+            await self._handle_mesh_down()
+        elif not self._mesh_alive:
+            # Still down — try to recover periodically
+            await self._handle_mesh_down()
 
         return results
+
+    async def _handle_mesh_down(self) -> None:
+        """Handle agent-mesh being unreachable — restart if managed."""
+        if self._mesh_process is None:
+            return
+
+        if self._mesh_process.check_and_restart():
+            if await self._mesh_process.wait_ready(timeout=15.0):
+                self._mesh_alive = True
+                logger.info("agent-mesh recovered")
 
     async def _process_batch(self, approvals: list[ApprovalSummary]) -> None:
         """Process approvals concurrently with a semaphore."""

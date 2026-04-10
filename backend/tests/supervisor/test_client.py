@@ -102,7 +102,7 @@ async def test_deny_not_found(mock_mesh):
 
 @pytest.mark.asyncio
 async def test_connection_error():
-    """When mesh is down, list_pending returns empty list."""
+    """When mesh is down, list_pending returns None."""
     async with MeshClient("http://localhost:1", "supervisor") as client:
         results = await client.list_pending()
-    assert results == []
+    assert results is None
