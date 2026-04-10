@@ -46,6 +46,7 @@ class SupervisorRunner:
         try:
             await self._run()
         finally:
+            await self._evaluator.close()
             await self._client.close()
             self._logger.close()
             logger.info("supervisor stopped")
@@ -93,7 +94,7 @@ class SupervisorRunner:
                 logger.warning("could not fetch detail for %s", summary.id)
                 return
 
-            decision = self._evaluator.evaluate(detail)
+            decision = await self._evaluator.evaluate(detail)
 
             if decision.decision == "approved":
                 req = ResolveRequest(

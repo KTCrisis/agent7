@@ -29,6 +29,28 @@ class RuleConfig(BaseModel):
     confidence: float = 0.9
 
 
+class OllamaConfig(BaseModel):
+    """Configuration for LLM-based evaluation via Ollama."""
+
+    enabled: bool = False
+    url: str = "http://localhost:11434"
+    model: str = "qwen3:14b"
+    system_prompt: str = (
+        "You are a supervisor agent evaluating tool call approval requests. "
+        "You receive a JSON description of a pending approval including the tool name, "
+        "parameters, the agent's recent activity, and active grants.\n\n"
+        "Respond with EXACTLY one line in this format:\n"
+        "DECISION: <APPROVE|DENY|ESCALATE> | CONFIDENCE: <0.0-1.0> | REASONING: <one sentence>\n\n"
+        "Guidelines:\n"
+        "- APPROVE if the action is routine and low-risk (writes within project scope, reads, etc.)\n"
+        "- DENY if the action is clearly dangerous (writes to system dirs, suspicious patterns)\n"
+        "- ESCALATE if you are unsure or the action is high-stakes\n"
+        "- Base your decision on STRUCTURAL properties (paths, tool names, patterns), not content semantics\n"
+        "- Be conservative: when in doubt, ESCALATE"
+    )
+    timeout: float = 30.0  # seconds
+
+
 class SupervisorConfig(BaseModel):
     """Top-level supervisor configuration."""
 
@@ -40,6 +62,7 @@ class SupervisorConfig(BaseModel):
     rules: list[RuleConfig] = Field(default_factory=list)
     project_dirs: list[str] = Field(default_factory=list)
     decision_log: str = "supervisor-decisions.jsonl"
+    ollama: OllamaConfig = Field(default_factory=OllamaConfig)
 
     @field_validator("poll_interval", mode="before")
     @classmethod
