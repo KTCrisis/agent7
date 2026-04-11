@@ -1,0 +1,23 @@
+flow:
+  id: pr-review
+  name: "Pull Request Review Pipeline"
+  owner: platform-team
+  trigger: github.pull_request.opened
+  classification: internal
+
+  steps:
+    - agent: claude-coder
+      action: analyze_diff
+      outputs: [analysis_report]
+
+    - agent: code-reviewer
+      action: review
+      inputs: [analysis_report]
+      requires_approval: true
+      outputs: [review_result]
+
+    - agent: test-runner
+      action: run_tests
+      inputs: [review_result]
+      condition: "review_result.verdict == 'approve'"
+      outputs: [test_report]

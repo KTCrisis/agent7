@@ -1,0 +1,26 @@
+agent:
+  id: claude-coder
+  name: "Claude Code Assistant"
+  owner: platform-team
+  classification: internal
+  maturity: production
+  tags: [coding, review, refactor]
+  description: "Assists developers with code generation, review, and refactoring"
+
+  capabilities:
+    tools: ["filesystem.*", "git.*"]
+    mcp_servers: [filesystem, github]
+    models: [claude-opus-4, claude-sonnet-4]
+
+  constraints:
+    rate_limit:
+      max_per_minute: 60
+      max_total: 5000
+    requires_approval: ["filesystem.write_*", "git.push"]
+    denied: ["filesystem.move_file", "git.force_push"]
+
+  depends_on:
+    - agent: code-reviewer
+      relationship: delegates_review
+    - agent: test-runner
+      relationship: triggers_after

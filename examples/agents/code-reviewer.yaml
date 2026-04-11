@@ -1,0 +1,24 @@
+agent:
+  id: code-reviewer
+  name: "Code Review Agent"
+  owner: platform-team
+  classification: internal
+  maturity: production
+  tags: [review, quality, security]
+  description: "Reviews pull requests for code quality, security issues, and best practices"
+
+  capabilities:
+    tools: ["filesystem.read_*", "git.diff", "git.log"]
+    mcp_servers: [filesystem, github]
+    models: [claude-opus-4]
+
+  constraints:
+    rate_limit:
+      max_per_minute: 30
+      max_total: 2000
+    requires_approval: []
+    denied: ["filesystem.write_*", "git.push", "git.force_push"]
+
+  depends_on:
+    - tool: memory.recall
+      relationship: reads_context

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent7.dev/schemas/template.schema.json",
+  "title": "Policy Template",
+  "description": "Reusable governance rules for agents or flows",
+  "type": "object",
+  "required": ["template"],
+  "properties": {
+    "template": {
+      "type": "object",
+      "required": ["id", "name", "target", "rules"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string",
+          "enum": ["agent", "flow"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "kind", "severity", "check"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule identifier"
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["CONDITION", "VALIDATION", "POLICY"]
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["info", "warning", "error", "critical"]
+              },
+              "check": {
+                "type": "string",
+                "description": "Expression to evaluate"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable explanation when rule fails"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

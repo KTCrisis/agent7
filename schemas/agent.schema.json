@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent7.dev/schemas/agent.schema.json",
+  "title": "Agent Declaration",
+  "description": "Declares an AI agent with identity, capabilities, constraints, and dependencies",
+  "type": "object",
+  "required": ["agent"],
+  "properties": {
+    "agent": {
+      "type": "object",
+      "required": ["id", "owner"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Unique agent identifier (kebab-case)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable display name"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Team or individual owning this agent"
+        },
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "restricted"],
+          "default": "internal"
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["experimental", "staging", "production", "deprecated"],
+          "default": "experimental"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "description": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Glob patterns of tools this agent can use"
+            },
+            "mcp_servers": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "MCP server names this agent connects to"
+            },
+            "models": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "LLM models this agent can use"
+            }
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "properties": {
+            "rate_limit": {
+              "type": "object",
+              "properties": {
+                "max_per_minute": { "type": "integer", "minimum": 1 },
+                "max_total": { "type": "integer", "minimum": 1 }
+              }
+            },
+            "requires_approval": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Tool glob patterns requiring human approval"
+            },
+            "denied": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Tool glob patterns explicitly denied"
+            }
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["relationship"],
+            "oneOf": [
+              { "required": ["agent"] },
+              { "required": ["tool"] }
+            ],
+            "properties": {
+              "agent": { "type": "string" },
+              "tool": { "type": "string" },
+              "relationship": {
+                "type": "string",
+                "enum": [
+                  "delegates_to",
+                  "delegates_review",
+                  "triggers_after",
+                  "reads_context",
+                  "writes_context",
+                  "depends_on"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

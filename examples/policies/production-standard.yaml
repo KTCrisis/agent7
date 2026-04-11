@@ -1,0 +1,40 @@
+template:
+  id: production-standard
+  name: "Production Agent Requirements"
+  target: agent
+  rules:
+    - name: must-have-owner
+      kind: CONDITION
+      severity: critical
+      check: "agent.owner != ''"
+      message: "Production agents must have an owner"
+
+    - name: must-have-description
+      kind: CONDITION
+      severity: error
+      check: "agent.description != ''"
+      message: "Agents must have a description"
+
+    - name: must-declare-tools
+      kind: VALIDATION
+      severity: error
+      check: "len(agent.capabilities.tools) > 0"
+      message: "Agents must declare their tool capabilities"
+
+    - name: restricted-needs-approval
+      kind: POLICY
+      severity: critical
+      check: "agent.classification == 'restricted' implies len(agent.constraints.requires_approval) > 0"
+      message: "Restricted agents must require approval for sensitive operations"
+
+    - name: max-tools-per-agent
+      kind: VALIDATION
+      severity: warning
+      check: "len(agent.capabilities.tools) <= 20"
+      message: "Agents with too many tools are hard to govern"
+
+    - name: deprecated-no-new-flows
+      kind: POLICY
+      severity: warning
+      check: "agent.maturity != 'deprecated' or agent.flow_count == 0"
+      message: "Deprecated agents should not be part of active flows"
