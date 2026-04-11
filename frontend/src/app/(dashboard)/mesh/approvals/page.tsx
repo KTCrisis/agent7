@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 
 export default function ApprovalsPage() {
-  const { data: approvals = [] } = useApprovals();
+  const { data: rawApprovals } = useApprovals();
+  const approvals = rawApprovals ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState("");
 

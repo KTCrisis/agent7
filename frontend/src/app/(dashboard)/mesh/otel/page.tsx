@@ -55,7 +55,7 @@ export default function OtelTracesPage() {
         <div>
           <h2 className="text-xl font-semibold">OTEL Traces</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            OTLP JSON spans from agent-mesh v0.6.0 · {filtered.length} spans
+            OTLP JSON spans · {filtered.length} spans
             {totalInputTokens + totalOutputTokens > 0 && (
               <>
                 {" · "}
@@ -111,8 +111,8 @@ export default function OtelTracesPage() {
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           {error.message}
           <p className="mt-2 text-xs text-muted-foreground">
-            agent-mesh v0.6.0+ required. Run{" "}
-            <code className="font-mono">make install</code> and restart.
+            OTEL export not enabled. Check <code className="font-mono">config.yaml</code>{" "}
+            and restart agent-mesh.
           </p>
         </div>
       )}

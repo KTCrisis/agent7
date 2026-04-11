@@ -93,6 +93,7 @@ export interface HealthData {
     errors: number;
     human_approval: number;
   };
+  version?: string;
 }
 
 export async function fetchHealth(): Promise<HealthData> {
@@ -102,7 +103,7 @@ export async function fetchHealth(): Promise<HealthData> {
 }
 
 // ───────────────────────────────────────────────────────────
-// OTLP / OpenTelemetry types — shipped in agent-mesh v0.6.0
+// OTLP / OpenTelemetry types
 // ───────────────────────────────────────────────────────────
 
 export interface OtlpKV {

@@ -48,6 +48,9 @@ export default function MeshOverview() {
           {health && (
             <p className="text-xs text-muted-foreground mt-0.5">
               {health.tools} tools registered &middot; {health.traces.total} total calls
+              {health.version && (
+                <> &middot; agent-mesh <span className="font-mono">{health.version}</span></>
+              )}
             </p>
           )}
         </div>

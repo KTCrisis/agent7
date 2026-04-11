@@ -10,7 +10,8 @@ export default function TracesPage() {
   const [filterPolicy, setFilterPolicy] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const { data: traces = [] } = useTraces({ limit: 200 });
+  const { data: rawTraces } = useTraces({ limit: 200 });
+  const traces = rawTraces ?? [];
 
   const uniqueAgents = [...new Set(traces.map((t) => t.agent_id))];
   const uniquePolicies = [...new Set(traces.map((t) => t.policy))];
