@@ -3,11 +3,13 @@
 import { Fragment, useState } from "react";
 import { useTraces } from "@/lib/hooks/use-mesh";
 import { formatDuration, timeAgo } from "@/lib/utils";
+import Link from "next/link";
 
 export default function TracesPage() {
   const [filterAgent, setFilterAgent] = useState("");
   const [filterTool, setFilterTool] = useState("");
   const [filterPolicy, setFilterPolicy] = useState("");
+  const [filterSession, setFilterSession] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data: rawTraces } = useTraces({ limit: 200 });
@@ -15,12 +17,14 @@ export default function TracesPage() {
 
   const uniqueAgents = [...new Set(traces.map((t) => t.agent_id))];
   const uniquePolicies = [...new Set(traces.map((t) => t.policy))];
+  const uniqueSessions = [...new Set(traces.map((t) => t.session_id).filter(Boolean))];
 
   const filtered = traces.filter((t) => {
     if (filterAgent && t.agent_id !== filterAgent) return false;
     if (filterTool && !t.tool.toLowerCase().includes(filterTool.toLowerCase()))
       return false;
     if (filterPolicy && t.policy !== filterPolicy) return false;
+    if (filterSession && t.session_id !== filterSession) return false;
     return true;
   });
 
@@ -67,12 +71,27 @@ export default function TracesPage() {
             </option>
           ))}
         </select>
-        {(filterAgent || filterTool || filterPolicy) && (
+        {uniqueSessions.length > 0 && (
+          <select
+            value={filterSession}
+            onChange={(e) => setFilterSession(e.target.value)}
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All sessions</option>
+            {uniqueSessions.map((s) => (
+              <option key={s} value={s}>
+                {s.slice(0, 12)}
+              </option>
+            ))}
+          </select>
+        )}
+        {(filterAgent || filterTool || filterPolicy || filterSession) && (
           <button
             onClick={() => {
               setFilterAgent("");
               setFilterTool("");
               setFilterPolicy("");
+              setFilterSession("");
             }}
             className="text-[11px] text-muted-foreground hover:text-foreground transition-colors px-2"
           >
@@ -87,6 +106,9 @@ export default function TracesPage() {
             <tr className="border-b border-border bg-secondary/30">
               <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                 Agent
+              </th>
+              <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Session
               </th>
               <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                 Tool
@@ -118,6 +140,18 @@ export default function TracesPage() {
                   }
                 >
                   <td className="px-4 py-2.5 text-sm font-medium">{t.agent_id}</td>
+                  <td className="px-4 py-2.5 font-mono text-[11px]">
+                    {t.session_id ? (
+                      <Link
+                        href={`/mesh/sessions/${t.session_id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {t.session_id.slice(0, 12)}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
                     {t.tool}
                   </td>
@@ -141,10 +175,13 @@ export default function TracesPage() {
                 </tr>
                 {expanded === t.trace_id && (
                   <tr className="border-b border-border/30">
-                    <td colSpan={7} className="px-4 py-4 bg-secondary/10">
+                    <td colSpan={8} className="px-4 py-4 bg-secondary/10">
                       <div className="grid grid-cols-2 gap-4 text-xs max-w-3xl">
                         <div className="space-y-2">
                           <Field label="Trace ID" value={t.trace_id} mono />
+                          {t.session_id && (
+                            <Field label="Session ID" value={t.session_id} mono />
+                          )}
                           <Field label="Policy rule" value={t.policy_rule} />
                           {t.approval_id && (
                             <>
@@ -173,7 +210,7 @@ export default function TracesPage() {
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-12 text-center text-sm text-muted-foreground"
                 >
                   No traces found

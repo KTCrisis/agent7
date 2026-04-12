@@ -2,6 +2,7 @@ const MESH_BASE = "/api/mesh";
 
 export interface TraceEntry {
   trace_id: string;
+  session_id: string;
   agent_id: string;
   tool: string;
   params: Record<string, unknown>;
@@ -99,6 +100,44 @@ export interface HealthData {
 export async function fetchHealth(): Promise<HealthData> {
   const res = await fetch(`${MESH_BASE}/health`);
   if (!res.ok) throw new Error(`Failed to fetch health: ${res.status}`);
+  return res.json();
+}
+
+// ───────────────────────────────────────────────────────────
+// Sessions
+// ───────────────────────────────────────────────────────────
+
+export interface SessionSummary {
+  session_id: string;
+  agent_id: string;
+  event_count: number;
+  first_seen: string;
+  last_seen: string;
+  tools: string[];
+}
+
+export async function fetchSessions(opts?: {
+  limit?: number;
+}): Promise<SessionSummary[]> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString();
+  const res = await fetch(`${MESH_BASE}/sessions${qs ? `?${qs}` : ""}`);
+  if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSessionEvents(
+  id: string,
+  opts?: { limit?: number }
+): Promise<TraceEntry[]> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString();
+  const res = await fetch(
+    `${MESH_BASE}/sessions/${encodeURIComponent(id)}${qs ? `?${qs}` : ""}`
+  );
+  if (!res.ok) throw new Error(`Failed to fetch session events: ${res.status}`);
   return res.json();
 }
 

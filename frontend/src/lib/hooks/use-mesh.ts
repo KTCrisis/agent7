@@ -6,6 +6,8 @@ import {
   fetchHealth,
   resolveApproval,
   fetchOtelTraces,
+  fetchSessions,
+  fetchSessionEvents,
 } from "@/lib/api/mesh";
 
 export function useHealth() {
@@ -53,6 +55,23 @@ export function useApprovalDetail(id: string | null) {
     queryKey: ["mesh", "approval", id],
     queryFn: () => fetchApprovalDetail(id!),
     enabled: !!id,
+  });
+}
+
+export function useSessions(opts?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["mesh", "sessions", opts],
+    queryFn: () => fetchSessions(opts),
+    refetchInterval: 10000,
+  });
+}
+
+export function useSessionEvents(id: string | null, opts?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["mesh", "session", id, opts],
+    queryFn: () => fetchSessionEvents(id!, opts),
+    enabled: !!id,
+    refetchInterval: 5000,
   });
 }
 

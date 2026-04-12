@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Activity, Shield, LayoutDashboard, Radio, GitBranch } from "lucide-react";
+import { Activity, Shield, LayoutDashboard, Radio, GitBranch, Users } from "lucide-react";
 import { useHealth } from "@/lib/hooks/use-mesh";
 
 const nav = [
   { href: "/mesh", label: "Overview", icon: LayoutDashboard },
   { href: "/mesh/traces", label: "Traces", icon: Activity },
+  { href: "/mesh/sessions", label: "Sessions", icon: Users },
   { href: "/mesh/otel", label: "OTEL", icon: GitBranch },
   { href: "/mesh/approvals", label: "Approvals", icon: Shield },
 ];
