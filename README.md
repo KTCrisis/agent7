@@ -17,8 +17,10 @@ Early stage. Two pieces are operational:
 - **dashboard** — Next.js 16 + TanStack Query frontend with mesh-oriented routes:
   - `/mesh` — health, connected MCP servers, tool inventory
   - `/mesh/traces` — trace browser fed by agent-mesh `/traces`
+  - `/mesh/sessions` — session list and drill-down
   - `/mesh/approvals` — pending approvals, approve/deny
   - `/mesh/otel` — OTEL waterfall view fed by agent-mesh `/otel-traces` (v0.6.1+)
+  - `/mesh/memory` — mem7 memory browser (search, filter by agent, detail view)
 
 Everything else in the tree (`backend/app/api`, `governance-engine/`, `schemas/`, `examples/`)
 is scaffolding for future phases.
@@ -40,9 +42,17 @@ is scaffolding for future phases.
 │  policy engine · rate limits · approvals · traces    │
 │              localhost:9090                          │
 └──────────────────────────────────────────────────────┘
+           ▲
+           │  JSON-RPC (/rpc)
+┌──────────┴───────────┐
+│       mem7 (Go)      │
+│  memory substrate    │
+│  localhost:9070      │
+└──────────────────────┘
 ```
 
 Both sides talk to agent-mesh over plain HTTP. No direct coupling between frontend and supervisor.
+The frontend also connects directly to mem7 (JSON-RPC on port 9070) for the memory debug view.
 
 ## Local setup
 
@@ -52,6 +62,7 @@ Prerequisites:
 - Node.js 20+
 - Python 3.12+
 - Optional: [Ollama](https://ollama.com) running locally for the supervisor LLM fallback
+- Optional: [mem7](https://github.com/KTCrisis/mem7) in serve mode on `localhost:9070` for the memory view
 
 ### Dashboard
 
@@ -62,8 +73,8 @@ npm run dev
 # http://localhost:3000
 ```
 
-The dashboard proxies to `http://localhost:9090` by default. Adjust in `frontend/next.config.ts`
-if agent-mesh listens elsewhere.
+The dashboard proxies to `http://localhost:9090` (agent-mesh) and `http://localhost:9070` (mem7)
+by default. Adjust in `frontend/next.config.ts` if they listen elsewhere.
 
 ### Supervisor
 
@@ -103,4 +114,5 @@ pytest tests/supervisor
 ## Related
 
 - [agent-mesh](https://github.com/KTCrisis/agent-mesh) — runtime enforcement sidecar
+- [mem7](https://github.com/KTCrisis/mem7) — governed memory substrate for multi-agent systems
 - [event7](https://github.com/KTCrisis/event7) — sibling project for data contract governance
