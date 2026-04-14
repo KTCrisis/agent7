@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Activity, Shield, LayoutDashboard, Radio, GitBranch, Users } from "lucide-react";
+import { Activity, Shield, LayoutDashboard, Radio, GitBranch, Users, Brain } from "lucide-react";
 import { useHealth } from "@/lib/hooks/use-mesh";
 
 const nav = [
@@ -12,6 +12,7 @@ const nav = [
   { href: "/mesh/sessions", label: "Sessions", icon: Users },
   { href: "/mesh/otel", label: "OTEL", icon: GitBranch },
   { href: "/mesh/approvals", label: "Approvals", icon: Shield },
+  { href: "/mesh/memory", label: "Memory", icon: Brain },
 ];
 
 export default function DashboardLayout({

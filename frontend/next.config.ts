@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         source: "/api/mesh/:path*",
         destination: "http://localhost:9090/:path*",
       },
+      {
+        source: "/api/mem7/:path*",
+        destination: "http://localhost:9070/:path*",
+      },
     ];
   },
 };
